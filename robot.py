@@ -29,15 +29,15 @@ def replay_commands(robot_name, command):
     global history_commands_storage, silent, replay, num_history_commands
     number_of_stored_commands = 0  
     #history_length = len(history_commands_storage)    
-    if command == 'reversed' in command:
+    if command == 'replay reversed' in command:
         for instruction in history_commands_storage:
             silent = True
             replay = True
             handle_command(robot_name, instruction)
             number_of_stored_commands += 1
-        output = " > " + robot_name + ' replayed ' + str(number_of_stored_commands) + ' commands in reverse.'   
+        output = " > " + robot_name + ' replayed ' + str(number_of_stored_commands) , ' commands in reverse.'   
         
-    elif command == 'silent':
+    elif command == 'replay'in command:
             
         for instruction in history_commands_storage:
             silent = True
@@ -45,7 +45,7 @@ def replay_commands(robot_name, command):
             handle_command(robot_name, instruction)
             number_of_stored_commands += 1
         output = " > " + robot_name + ' replayed ' + str(number_of_stored_commands) + ' silently.'    
-    elif command == 'reversed silent':
+    elif command == 'reversed' in command:
 
         for instruction in history_commands_storage[::-1]:
             silent = True
