@@ -1,10 +1,10 @@
 # list of valid command names
 from os import replace
 
-valid_commands = ['off', 'help', 'replay', 'forward', 'back', 'right', 'left', 'sprint']
-stored_valid_commands = ['reversed','silent','replay silent', 'reversed silent']
+valid_commands = ['off', 'help', 'forward', 'back', 'right', 'left', 'silent','replay','sprint']
+stored_valid_commands = ['reversed','replay ','silent','replay','reversed silent']
 history_commands_storage = []
-nun_history_commands = []# variables tracking position and direction\position_x = 0
+num_history_commands = []# variables tracking position and direction\position_x = 0
 position_y = 0
 directions = ['forward', 'right', 'back', 'left']
 current_direction_index = 0# area limit vars
@@ -12,7 +12,7 @@ min_y, max_y = -200, 200
 min_x, max_x = -100, 100#flag
 silent = False
 replay = False
-#replay_silent = True
+#replay_silent_flag = False
 #TODO: WE NEED TO DECIDE IF WE WANT TO PRE_POPULATE A SOLUTION HERE, OR GET STUDENT TO BUILD ON THEIR PREVIOUS SOLUTION.
 def get_history_commands():
     global history_commands_storage
@@ -25,47 +25,66 @@ def update_get_history_commands(command):
     history_commands_storage.append(command.lower())
     #return history_commands_storage
     
-def replay_commands(robot_name, command):
+def replay_commands_flag(robot_name, command):
     global history_commands_storage, silent, replay, num_history_commands
     number_of_stored_commands = 0  
     
-    #history_length = len(history_commands_storage)    
-    if 'reversed' in command:
-        for instruction in history_commands_storage:
+    #history_length = len(history_commands_storage)  
+      
+    if 'silent' in command and 'reversed' not in command:
+        silent = True
+        #replay = True
+       # handle_command(robot_name, command)
+        replay_silent(handle_command,robot_name)
+    elif 'reversed' in command and 'silent' not in command:
+        silent = False
+        replay = True
+        replay_reversed(robot_name,command)
+    elif 'silent' in command and 'reversed' in command:
+        silent = True
+        replay = True
+        reversed_silent(robot_name,command)  
+    else:
+        for instruct in history_commands_storage:       
             silent = False
             replay = True
-            handle_command(robot_name, instruction)
-            number_of_stored_commands += 1
-        output = " > " + robot_name + ' replayed ' + str(number_of_stored_commands) + ' commands in reverse.'   
-        
-       
-    elif'reversed silent' in command:
+            handle_command(robot_name,instruct)
+            number_of_stored_commands +=1
+        print(" > " + robot_name + ' replayed ' +  str(number_of_stored_commands) + ' commands.') 
+        #return output        
 
-        for instruction in history_commands_storage[::-1]:
-            silent = True
-            replay = True
-            handle_command(robot_name, instruction)
-            number_of_stored_commands += 1
-        output = " > " + robot_name + ' replayed ' + str(number_of_stored_commands) + ' commands in reverse silently.'   
-    else:
-        for instruction in history_commands_storage:
-            handle_command(robot_name, instruction)
-            number_of_stored_commands += 1
-        output = " > " + robot_name + ' replayed ' + str(number_of_stored_commands) + ' commands.'
-    return  output
-    
-def replay_silent(robot_name,command):
-    global history_commands_storage, silent, replay, num_history_commands
+def replay_silent(handle_command,robot_name):
+    global history_commands_storage, silent,replay, num_history_commands
     number_of_stored_commands = 0
-    if command == 'silent' in command:
-        for instruction in history_commands_storage:
-            silent = True
-            replay = True
-            handle_command(robot_name, instruction)
-            number_of_stored_commands += 1
-        output = " > " + robot_name + ' replayed ' + str(number_of_stored_commands) + ' silently.' 
+    for instruction in history_commands_storage:
+        handle_command(robot_name, instruction)
+        number_of_stored_commands += 1
+    print(" > " + robot_name + ' replayed ' + str(number_of_stored_commands) + ' silently.')
+    silent = False
 
-    return output    
+       
+
+def replay_reversed(robot_name,command):
+    global history_commands_storage, silent,replay, num_history_commands
+    number_of_stored_commands = 0
+    for instruction in history_commands_storage[::-1]:
+        handle_command(robot_name,instruction)
+        number_of_stored_commands +=1
+    print(" > " + robot_name + " replayed " + str(number_of_stored_commands) + " commands in reverse.")    
+    silent = False
+    replay = False
+   # pass
+
+def reversed_silent(robot_name,command):
+    global history_commands_storage, silent,replay, num_history_commands
+    number_of_stored_commands = 0
+    for instructions in history_commands_storage[::-1]:
+        handle_command(robot_name,instructions)
+        number_of_stored_commands += 1
+    print(" > " + robot_name + " replayed " + str(number_of_stored_commands) + " commands in reverse silently")    
+   # pass
+#replay_commands(robot_name,command):
+
 
 def get_robot_name():
     name = input("What do you want to name your robot? ")
@@ -114,7 +133,7 @@ def valid_command(command):
     Also checks if there is an argument to the command, and if it a valid int
     """
     global stored_valid_commands
-    global replay
+    global replay 
     (command_name, arg1) = split_command_input(command)
     if command_name.lower() in directions and (len(arg1) == 0 or is_int(arg1) or arg1 in stored_valid_commands):
         update_get_history_commands(command)
@@ -246,6 +265,7 @@ def handle_command(robot_name, command):
     :return: `True` if the robot must continue after the command, or else `False` if robot must shutdown
     """
     global silent, replay
+    do_next = True
     (command_name, arg) = split_command_input(command)
     if command_name == 'off':
         return False
@@ -259,18 +279,25 @@ def handle_command(robot_name, command):
         (do_next, command_output) = do_right_turn(robot_name)
     elif command_name == 'left':
         (do_next, command_output) = do_left_turn(robot_name)
+    elif command_name == 'silent':
+        replay_silent(robot_name,arg)
     elif command_name == 'replay':
-        (command_output)=  replay_commands(robot_name,arg)
-    elif command_name == 'replay silent ':
-        (do_next,command_output) = replay_silent(robot_name,arg)    
+        #(command_output) = replay_commands_flag(robot_name,arg) 
+        replay_commands_flag(robot_name,arg)
     elif command_name == 'sprint':
         (do_next,command_output) = do_sprint(robot_name, int(arg))
-        silent = False   
-        #return command 
-    if silent == False:
+    
+    if silent == True:
+        if 'reversed' in command:
+            show_position(robot_name)
+        else:    
+            return do_next
+    elif 'replay' in command:
+        show_position(robot_name) 
+    else:
         print(command_output)
         show_position(robot_name)    
-    return command
+    return do_next
 
 def get_replay_range():    
     num= []
